@@ -20,7 +20,7 @@ using PathMap = unordered_map<const string*, const string*>;
 using CostMap = unordered_map<const string*, int32_t>;
 
 // Utilities for debugging.
-std::ostream& operator<<(std::ostream& os, const PathMap& m) { 
+std::ostream& operator<<(std::ostream& os, const PathMap& m) {
   os << "PathMap:\n";
   for (const auto& pair : m) {
     os << "Key: " << *pair.first << "\nValue: ";
@@ -34,7 +34,7 @@ std::ostream& operator<<(std::ostream& os, const PathMap& m) {
   return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const CostMap& m) { 
+std::ostream& operator<<(std::ostream& os, const CostMap& m) {
   os << "CostMap:\n";
   for (const auto& pair : m) {
     os << "Key: " << *pair.first << "\nValue: " << pair.second << "\n";
@@ -65,7 +65,8 @@ bool is_single_edit(const string& word1, const string& word2) {
         continue;
       }
     }
-    ++long_it; ++short_it;
+    ++long_it;
+    ++short_it;
   }
 
   return true;
@@ -159,14 +160,12 @@ void run_asserts() {
 
   {
     const vector<string> words = {"bare", "bar", "bart", "fart"};
-    PathMap expected = {{&words[1], &words[0]},
-                        {&words[2], &words[1]}};
+    PathMap expected = {{&words[1], &words[0]}, {&words[2], &words[1]}};
     assert(find_paths(words, "bare") == expected);
   }
   {
     const vector<string> words = {"bare", "bar", "bart", "fart"};
-    PathMap expected = {{&words[0], &words[1]},
-                        {&words[2], &words[1]}};
+    PathMap expected = {{&words[0], &words[1]}, {&words[2], &words[1]}};
     assert(find_paths(words, "bar") == expected);
   }
 }
@@ -228,7 +227,7 @@ int main() {
 
   cout << "Found path: \n";
   for (auto short_path_it = shortest_path.rbegin();
-       short_path_it != shortest_path.rend(); ++short_path_it){
+       short_path_it != shortest_path.rend(); ++short_path_it) {
     cout << **short_path_it << " -> ";
   }
   cout << target << "\n";
