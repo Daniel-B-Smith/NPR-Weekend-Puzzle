@@ -39,10 +39,6 @@ std::ostream& operator<<(std::ostream& os, const CostMap& m) {
 }
 
 bool is_single_edit(const string& word1, const string& word2) {
-  // If the words have a size difference other than 1, they can't have a single
-  // edit.
-  // if (abs((int)word1.size() - (int)word2.size()) != 1) return false;
-
   bool first_word_longer = word1.size() > word2.size();
   // The iterators into the longer word.
   auto long_it = (first_word_longer) ? word1.begin() : word2.begin();
@@ -146,31 +142,6 @@ PathMap find_paths(const vector<string>& words, const string& source) {
 }
 
 void run_asserts() {
-  /*assert(is_single_edit("bar", "bare"));
-  assert(is_single_edit("bare", "bar"));
-  assert(!is_single_edit("bare", "bart"));
-
-  {
-    const vector<string> words = {"bare", "bart", "fart"};
-    const vector<const string*> expected = {&words[0], &words[1]};
-    assert(find_string_mutations(words, "bar") == expected);
-  }
-  {
-    const vector<string> words = {"bare", "bart", "fart"};
-    const vector<const string*> expected;
-    assert(find_string_mutations(words, "car") == expected);
-  }
-  {
-    const vector<string> words = {"bare", "bart", "fart"};
-    const vector<const string*> expected = {&words[2]};
-    assert(find_string_mutations(words, "far") == expected);
-  }
-  {
-    const vector<string> words = {"bare", "bart", "fart"};
-    const vector<const string*> expected = {&words[0], &words[1]};
-    assert(find_string_mutations(words, "baret") == expected);
-    }*/
-
   {
     const vector<string> words = {"bare", "bar", "bart", "fart"};
     PathMap expected = {{words[1], words[0]}, {words[2], words[1]}};
@@ -187,8 +158,8 @@ int main() {
   run_asserts();
 
   cout << "Enter the dictionary filename: \n";
-  string filename = "some_words.txt";
-  //cin >> filename;
+  string filename;
+  cin >> filename;
 
   vector<string> words;
 
@@ -204,8 +175,8 @@ int main() {
     return 1;
   }
   cout << "Enter the source word: \n";
-  string source = "whole";
-  // cin >> source;
+  string source;
+   cin >> source;
 
   // If the source isn't in our list of words, give up.
   if (find(words.begin(), words.end(), source) == words.end()) {
@@ -216,11 +187,9 @@ int main() {
   PathMap path_map = find_paths(words, source);
 
   cout << "Enter the target word: \n";
-  string target = "heart";
-  // cin >> target;
-  auto target_it = find(words.begin(), words.end(), target);
-
-  if (target_it == words.end()) {
+  string target;
+  cin >> target;
+  if (find(words.begin(), words.end(), target) == words.end()) {
     cout << "Target not found!\n";
     return 1;
   }
