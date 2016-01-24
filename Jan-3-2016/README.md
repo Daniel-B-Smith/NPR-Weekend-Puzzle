@@ -17,7 +17,7 @@ What is the shortest path from 'whole' to 'heart'?
 Solution
 -------
 
-My first solution is in letter_insert_delete.cc. The basic algorithm is a hybrid of Djikstra and bread-first search that
+My first solution is in letter_insert_delete.cc. The basic algorithm is a hybrid of Djikstra and breadth-first search that
 runs in O(#Edges) by taking advantage of the fact that all the edges have the same weight, which negates the need for the
 priority queue. On my machine, the code was finding the path in ~24 seconds.
 
