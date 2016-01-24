@@ -1,0 +1,224 @@
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+#include <cstdlib>
+#include <deque>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
+// uncomment to disable assert()
+// #define NDEBUG
+
+using namespace std;
+
+// The pathmap points towards the previous node in the optimal path.
+using PathMap = unordered_map<const string*, const string*>;
+using CostMap = unordered_map<const string*, int32_t>;
+
+// Utilities for debugging.
+std::ostream& operator<<(std::ostream& os, const PathMap& m) {
+  os << "PathMap:\n";
+  for (const auto& pair : m) {
+    os << "Key: " << *pair.first << "\nValue: ";
+    if (pair.second == nullptr) {
+      os << "nullptr";
+    } else {
+      os << *pair.second;
+    }
+    os << "\n";
+  }
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const CostMap& m) {
+  os << "CostMap:\n";
+  for (const auto& pair : m) {
+    os << "Key: " << *pair.first << "\nValue: " << pair.second << "\n";
+  }
+  return os;
+}
+
+bool is_single_edit(const string& word1, const string& word2) {
+  // The iterators into the longer word.
+  auto long_it = (word1.size() > word2.size()) ? word1.begin() : word2.begin();
+  auto long_end = (word1.size() > word2.size()) ? word1.end() : word2.end();
+  // The iterators into the shorter word.
+  auto short_it = (word1.size() < word2.size()) ? word1.begin() : word2.begin();
+
+  bool found_edit = false;
+  while (long_it != long_end) {
+    if (*long_it != *short_it) {
+      if (found_edit) {
+        return false;
+      } else {
+        ++long_it;
+        found_edit = true;
+        continue;
+      }
+    }
+    ++long_it;
+    ++short_it;
+  }
+
+  return true;
+}
+
+vector<const string*> find_string_mutations(
+  const unordered_map<int, vector<const string*>>& words_by_length,
+  const string& input_word) {
+  vector<const string*> output;
+  auto it = words_by_length.find(input_word.size()-1);
+  if (it != words_by_length.end()) {
+    for (const auto word : it->second) {
+      if (is_single_edit(input_word, *word)) {
+        output.push_back(word);
+      }
+    }
+  }
+
+  it = words_by_length.find(input_word.size()+1);
+  if (it != words_by_length.end()) {
+    for (const auto word : it->second) {
+      if (is_single_edit(input_word, *word)) {
+        output.push_back(word);
+      }
+    }
+  }
+
+  return output;
+}
+
+void initialize_maps(
+  const vector<string>& words,
+  unordered_map<int, vector<const string*>>& words_by_length,
+  PathMap& paths, CostMap& cost_map) {
+  for (const auto& word : words) {
+    cost_map[&word] = INT32_MAX;
+    words_by_length[word.size()].push_back(&word);
+  }
+}
+
+void add_words(const vector<const string*>& new_words,
+               deque<const string*>& words_deque) {
+  words_deque.insert(words_deque.end(), new_words.begin(), new_words.end());
+}
+
+PathMap find_paths(const vector<string>& words, const string& source) {
+  PathMap path_map;
+  CostMap cost_map;
+  unordered_map<int, vector<const string*>> words_by_length;
+  initialize_maps(words, words_by_length, path_map, cost_map);
+
+  auto source_it = find(words.begin(), words.end(), source);
+  const string* source_word = &*source_it;
+  cost_map[source_word] = 0;
+  deque<const string*> words_to_visit = {source_word};
+  add_words(find_string_mutations(words_by_length, source), words_to_visit);
+
+  unordered_set<const string*> visited_words;
+  while (words_to_visit.size()) {
+    const string* current_word = *words_to_visit.begin();
+    words_to_visit.pop_front();
+    // Move on if we've handled this word before.
+    if (visited_words.find(current_word) != visited_words.end()) continue;
+    visited_words.insert(current_word);
+
+    assert(cost_map[current_word] < INT32_MAX);
+    int32_t new_cost = cost_map[current_word] + 1;
+
+    auto connected_words = find_string_mutations(words_by_length, *current_word);
+    add_words(connected_words, words_to_visit);
+
+    for (auto word : connected_words) {
+      auto current_cost = cost_map[word];
+      if (new_cost < current_cost) {
+        cost_map[word] = new_cost;
+        path_map[word] = current_word;
+      }
+    }
+  }
+
+  return path_map;
+}
+
+void run_asserts() {
+  {
+    const vector<string> words = {"bare", "bar", "bart", "fart"};
+    PathMap expected = {{&words[1], &words[0]}, {&words[2], &words[1]}};
+    assert(find_paths(words, "bare") == expected);
+  }
+  {
+    const vector<string> words = {"bare", "bar", "bart", "fart"};
+    PathMap expected = {{&words[0], &words[1]}, {&words[2], &words[1]}};
+    assert(find_paths(words, "bar") == expected);
+  }
+}
+
+int main() {
+  run_asserts();
+
+  cout << "Enter the dictionary filename: \n";
+  string filename;
+  cin >> filename;
+
+  vector<string> words;
+
+  ifstream words_file(filename);
+  if (words_file.is_open()) {
+    string line;
+    while (getline(words_file, line)) {
+      if (line.size() <= 2) continue;
+      words.push_back(std::move(line));
+    }
+  } else {
+    cout << "Failed to open file\n";
+    return 1;
+  }
+  cout << "Enter the source word: \n";
+  string source;
+  cin >> source;
+
+  // If the source isn't in our list of words, give up.
+  if (find(words.begin(), words.end(), source) == words.end()) {
+    cout << "Source word not found!\n";
+    return 1;
+  }
+
+  PathMap path_map = find_paths(words, source);
+
+  cout << "Enter the target word: \n";
+  string target;
+  cin >> target;
+  auto target_it = find(words.begin(), words.end(), target);
+
+  if (target_it == words.end()) {
+    cout << "Target not found!\n";
+    return 1;
+  }
+
+  const string* path_step = path_map[&*target_it];
+  if (path_step == nullptr) {
+    cout << "No path to target!\n";
+    return 1;
+  }
+
+  vector<const string*> shortest_path = {path_step};
+  while (*path_step != source) {
+    path_step = path_map[path_step];
+    assert(path_step != nullptr);
+    shortest_path.push_back(path_step);
+  }
+
+  cout << "Found path: \n";
+  for (auto short_path_it = shortest_path.rbegin();
+       short_path_it != shortest_path.rend(); ++short_path_it) {
+    cout << **short_path_it << " -> ";
+  }
+  cout << target << "\n";
+
+  return 0;
+}
