@@ -29,3 +29,7 @@
 
 # Data files
 *.txt
+
+# Cargo files
+Cargo.lock
+**/target/**
