@@ -81,8 +81,8 @@ fn clear_two_letters(word: &[char; 3], letter_map: &mut HashMap<char, u8>) -> bo
     true
 }
 
-// If the word is a candidate, puts it in the slot provided by `index`. Otherwise, do nothing.
-// Returns whether or not the word was inserted.
+// If the word is a candidate, append it. Otherwise, do nothing. Returns whether or not the word
+// was appended.
 fn append_word_if<'a>(
     word: &[char; 3],
     letter_map: &mut HashMap<char, u8>,
