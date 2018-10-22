@@ -41,12 +41,10 @@ fn letter_map_less_than(left: &HashMap<char, u8>, right: &HashMap<char, u8>) -> 
 
 // The middle letter has to be the middle letter of at least four words. Construct lists of
 // possible sets of words.
-fn shared_middle_letters(words: &[String]) -> Vec<Vec<&String>> {
+fn shared_middle_letters(words: &[[char; 3]]) -> Vec<Vec<[char; 3]>> {
     let mut map = HashMap::new();
     for word in words {
-        map.entry(get_char(word, 1))
-            .or_insert(Vec::new())
-            .push(word)
+        map.entry(word[1]).or_insert(Vec::new()).push(*word)
     }
     let mut out = Vec::new();
     for (_, val) in map.drain() {
@@ -58,8 +56,8 @@ fn shared_middle_letters(words: &[String]) -> Vec<Vec<&String>> {
 }
 
 // Checks that the first and last letters of `word` are still in `right`.
-fn two_letter_less_than(word: &str, right: &HashMap<char, u8>) -> bool {
-    for letter in [get_char(word, 0), get_char(word, 2)].iter() {
+fn two_letter_less_than(word: &[char; 3], right: &HashMap<char, u8>) -> bool {
+    for letter in [word[0], word[2]].iter() {
         match right.get(letter) {
             Some(count) => if *count <= 0 {
                 return false;
@@ -74,40 +72,37 @@ fn two_letter_less_than(word: &str, right: &HashMap<char, u8>) -> bool {
 // in `letter_map` by the first and third letters of the word. Ignores the middle letter since that
 // is shared.
 // Returns whether or not the word was a subset.
-fn clear_two_letters(word: &str, letter_map: &mut HashMap<char, u8>) -> bool {
+fn clear_two_letters(word: &[char; 3], letter_map: &mut HashMap<char, u8>) -> bool {
     if !two_letter_less_than(word, letter_map) {
         return false;
     }
-    *letter_map.get_mut(&get_char(word, 0)).unwrap() -= 1;
-    *letter_map.get_mut(&get_char(word, 2)).unwrap() -= 1;
+    *letter_map.get_mut(&word[0]).unwrap() -= 1;
+    *letter_map.get_mut(&word[2]).unwrap() -= 1;
     true
 }
 
 // If the word is a candidate, puts it in the slot provided by `index`. Otherwise, do nothing.
 // Returns whether or not the word was inserted.
 fn append_word_if<'a>(
-    word: &'a String,
+    word: &[char; 3],
     letter_map: &mut HashMap<char, u8>,
-    words: &mut Vec<&'a String>,
+    words: &mut Vec<[char; 3]>,
 ) -> bool {
     if !clear_two_letters(word, letter_map) {
         return false;
     }
-    words.push(word);
+    words.push(*word);
     true
 }
 
-fn four_word_product<'a>(
-    words: &[&'a String],
-    base_map: &HashMap<char, u8>,
-) -> Vec<Vec<&'a String>> {
+fn four_word_product<'a>(words: &[[char; 3]], base_map: &HashMap<char, u8>) -> Vec<Vec<[char; 3]>> {
     let mut out = Vec::new();
-    let middle_letter = get_char(words[0], 1);
+    let middle_letter = words[0][1];
     for ii in 0..words.len() {
         let mut map = base_map.clone();
         let mut four_words = Vec::new();
         *map.get_mut(&middle_letter).unwrap() -= 1;
-        if !append_word_if(words[ii], &mut map, &mut four_words) {
+        if !append_word_if(&words[ii], &mut map, &mut four_words) {
             continue;
         }
         assert_eq!(four_words.len(), 1);
@@ -116,21 +111,21 @@ fn four_word_product<'a>(
             four_words.truncate(1);
             // Create a new map per iteration.
             let mut map = map.clone();
-            if !append_word_if(words[jj], &mut map, &mut four_words) {
+            if !append_word_if(&words[jj], &mut map, &mut four_words) {
                 continue;
             }
             assert_eq!(four_words.len(), 2);
             for kk in jj + 1..words.len() {
                 four_words.truncate(2);
                 let mut map = map.clone();
-                if !append_word_if(words[kk], &mut map, &mut four_words) {
+                if !append_word_if(&words[kk], &mut map, &mut four_words) {
                     continue;
                 }
                 assert_eq!(four_words.len(), 3);
                 for ll in kk + 1..words.len() {
                     four_words.truncate(3);
                     let mut map = map.clone();
-                    if append_word_if(words[ll], &mut map, &mut four_words) {
+                    if append_word_if(&words[ll], &mut map, &mut four_words) {
                         assert_eq!(four_words.len(), 4);
                         out.push(four_words.clone());
                     }
@@ -144,9 +139,9 @@ fn four_word_product<'a>(
 // Find all of the combinations of four words that share a middle letter and the combined letters
 // of all four words are still a subset of 'base_map'.
 fn four_word_candidates<'a>(
-    shared_middle: &[Vec<&'a String>],
+    shared_middle: &[Vec<[char; 3]>],
     base_map: &HashMap<char, u8>,
-) -> Vec<Vec<&'a String>> {
+) -> Vec<Vec<[char; 3]>> {
     let mut out = Vec::new();
     for words in shared_middle {
         out.append(&mut four_word_product(words, base_map));
@@ -172,9 +167,9 @@ fn missing_index(ii: usize, jj: usize, kk: usize) -> usize {
 // word is the middle vertical, the third is the right to left diagonal (3, 5, 7) and the remaining
 // word is last.
 fn top_row_candidates<'a>(
-    four_cands: &Vec<Vec<&'a String>>,
-    possible_words: &HashSet<&String>,
-) -> Vec<Vec<&'a String>> {
+    four_cands: &Vec<Vec<[char; 3]>>,
+    possible_words: &HashSet<[char; 3]>,
+) -> Vec<Vec<[char; 3]>> {
     let mut out = Vec::new();
     for cand in four_cands {
         assert!(cand.len() == 4);
@@ -190,14 +185,7 @@ fn top_row_candidates<'a>(
                         continue;
                     }
                     let third = cand[kk];
-                    let word: String = [
-                        first.chars().next().unwrap(),
-                        second.chars().next().unwrap(),
-                        third.chars().next().unwrap(),
-                    ]
-                        .iter()
-                        .collect();
-
+                    let word = [first[0], second[0], third[0]];
                     if possible_words.contains(&word) {
                         let mut top_cand = vec![first, second, third];
                         top_cand.push(cand[missing_index(ii, jj, kk)]);
@@ -212,16 +200,16 @@ fn top_row_candidates<'a>(
 
 // Filter out sets of four where the bottom generated from the top three words isn't a word.
 fn filter_by_bottom<'a>(
-    top_cands: Vec<Vec<&'a String>>,
-    possible_words: &HashSet<&String>,
-) -> Vec<Vec<&'a String>> {
+    top_cands: Vec<Vec<[char; 3]>>,
+    possible_words: &HashSet<[char; 3]>,
+) -> Vec<Vec<[char; 3]>> {
     let mut out = Vec::new();
     for cand in top_cands {
         assert!(cand.len() == 4);
-        let first = get_char(cand[0], 2);
-        let second = get_char(cand[1], 2);
-        let third = get_char(cand[2], 2);
-        let word: String = [first, second, third].iter().collect();
+        let first = cand[0][2];
+        let second = cand[1][2];
+        let third = cand[2][2];
+        let word = [first, second, third];
         if possible_words.contains(&word) {
             out.push(cand);
             continue;
@@ -231,33 +219,21 @@ fn filter_by_bottom<'a>(
 }
 
 fn filter_by_rest<'a>(
-    cands: Vec<Vec<&'a String>>,
-    possible_words: &HashSet<&String>,
-) -> Vec<Vec<&'a String>> {
+    cands: Vec<Vec<[char; 3]>>,
+    possible_words: &HashSet<[char; 3]>,
+) -> Vec<Vec<[char; 3]>> {
     let mut out = Vec::new();
     for cand in cands {
         // The left vertical word is made up of the first letter of the first top word (left to
         // right diagnol), the first letter of the remaining word, and the last letter of the
         // third top word (right to left diagonal).
-        let left_v_word: String = [
-            get_char(cand[0], 0),
-            get_char(cand[3], 0),
-            get_char(cand[2], 2),
-        ]
-            .iter()
-            .collect();
+        let left_v_word = [cand[0][0], cand[3][0], cand[2][2]];
         if !possible_words.contains(&left_v_word) {
             continue;
         }
         // The right vertical word is from the first letter of the third top word, the third letter
         // of the remaining word and the third letter of the first top word.
-        let right_v_word: String = [
-            get_char(cand[2], 0),
-            get_char(cand[3], 2),
-            get_char(cand[0], 2),
-        ]
-            .iter()
-            .collect();
+        let right_v_word = [cand[2][0], cand[3][2], cand[0][2]];
         if !possible_words.contains(&right_v_word) {
             continue;
         }
@@ -268,25 +244,25 @@ fn filter_by_rest<'a>(
 }
 
 // Returns the 3x3 grid of letters in row major form.
-fn presentation_format(cand: &[&String]) -> Vec<Vec<char>> {
+fn presentation_format(cand: &[[char; 3]]) -> Vec<Vec<char>> {
     let mut out = Vec::new();
     // Fill in the vectors with x's just as a placeholder.
     for _ in 0..3 {
         out.push(vec!['x', 'x', 'x']);
     }
     // The first word is the left to right diagonal.
-    out[0][0] = get_char(cand[0], 0);
-    out[1][1] = get_char(cand[0], 1);
-    out[2][2] = get_char(cand[0], 2);
+    out[0][0] = cand[0][0];
+    out[1][1] = cand[0][1];
+    out[2][2] = cand[0][2];
     // The second word is the middle vertical.
-    out[0][1] = get_char(cand[1], 0);
-    out[2][1] = get_char(cand[1], 2);
+    out[0][1] = cand[1][0];
+    out[2][1] = cand[1][2];
     // The third word is the left diagonal.
-    out[0][2] = get_char(cand[2], 0);
-    out[2][0] = get_char(cand[2], 2);
+    out[0][2] = cand[2][0];
+    out[2][0] = cand[2][2];
     // The last word is the middle horizontal.
-    out[1][0] = get_char(cand[3], 0);
-    out[1][2] = get_char(cand[3], 2);
+    out[1][0] = cand[3][0];
+    out[1][2] = cand[3][2];
     out
 }
 
@@ -298,12 +274,12 @@ fn main() {
 
     // Construct a vector of three letter words that are a subset of beermouth.
     let source_word = construct_letter_map("beermouth");
-    let words: Vec<String> = BufReader::new(f)
+    let words: Vec<[char; 3]> = BufReader::new(f)
         .lines()
         .map(|s| s.unwrap())
         .filter(|s| s.len() == 3)
         .filter(|s| letter_map_less_than(&construct_letter_map(s), &source_word))
-        .map(|s| s)
+        .map(|s| [get_char(&s, 0), get_char(&s, 1), get_char(&s, 2)])
         .collect();
 
     // Find sets of words that share a middle letter.
@@ -315,7 +291,7 @@ fn main() {
     let word_set = {
         let mut word_set = HashSet::with_capacity(words.len());
         for word in words.iter() {
-            word_set.insert(word);
+            word_set.insert(word.clone());
         }
         word_set
     };
@@ -326,7 +302,8 @@ fn main() {
     for last_cand in last_cands {
         println!("Last candidate words:");
         for word in last_cand.iter() {
-            print!("{} ", word);
+            let word_str: String = word.iter().collect();
+            print!("{} ", word_str);
         }
         println!("\nIn grid format:");
         let present = presentation_format(&last_cand);
@@ -394,18 +371,18 @@ mod tests {
     #[test]
     fn test_shared_middle() {
         let mut words = Vec::new();
-        words.push("bee".to_string());
-        words.push("bet".to_string());
-        words.push("met".to_string());
-        words.push("bum".to_string());
-        words.push("but".to_string());
-        words.push("out".to_string());
-        words.push("ouf".to_string());
-        words.push("bot".to_string());
-        words.push("hot".to_string());
-        words.push("mot".to_string());
-        words.push("tom".to_string());
-        words.push("rot".to_string());
+        words.push(['b', 'e', 'e']);
+        words.push(['b', 'e', 't']);
+        words.push(['m', 'e', 't']);
+        words.push(['b', 'u', 'm']);
+        words.push(['b', 'u', 't']);
+        words.push(['o', 'u', 't']);
+        words.push(['o', 'u', 'f']);
+        words.push(['b', 'o', 't']);
+        words.push(['h', 'o', 't']);
+        words.push(['m', 'o', 't']);
+        words.push(['t', 'o', 'm']);
+        words.push(['r', 'o', 't']);
         let mut expected = Vec::new();
         {
             let mut group = Vec::new();
@@ -425,6 +402,9 @@ mod tests {
         }
         let mut input_words = words.clone();
         input_words.sort();
-        assert_eq!(expected, shared_middle_letters(&input_words));
+        let mut shared = shared_middle_letters(&input_words);
+        // Sort by the lengths of the sub-Vecs to prevent test flakes.
+        shared.sort_by(|l, r| l.len().cmp(&r.len()));
+        assert_eq!(expected, shared);
     }
 }
