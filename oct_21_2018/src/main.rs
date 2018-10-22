@@ -199,48 +199,27 @@ fn top_row_candidates<'a>(
 }
 
 // Filter out sets of four where the bottom generated from the top three words isn't a word.
-fn filter_by_bottom<'a>(
-    top_cands: Vec<Vec<[char; 3]>>,
-    possible_words: &HashSet<[char; 3]>,
-) -> Vec<Vec<[char; 3]>> {
-    let mut out = Vec::new();
-    for cand in top_cands {
-        assert!(cand.len() == 4);
-        let first = cand[0][2];
-        let second = cand[1][2];
-        let third = cand[2][2];
-        let word = [first, second, third];
-        if possible_words.contains(&word) {
-            out.push(cand);
-            continue;
-        }
-    }
-    out
+fn filter_by_bottom<'a>(cand: &Vec<[char; 3]>, possible_words: &HashSet<[char; 3]>) -> bool {
+    assert!(cand.len() == 4);
+    let first = cand[0][2];
+    let second = cand[1][2];
+    let third = cand[2][2];
+    let word = [first, second, third];
+    possible_words.contains(&word)
 }
 
-fn filter_by_rest<'a>(
-    cands: Vec<Vec<[char; 3]>>,
-    possible_words: &HashSet<[char; 3]>,
-) -> Vec<Vec<[char; 3]>> {
-    let mut out = Vec::new();
-    for cand in cands {
-        // The left vertical word is made up of the first letter of the first top word (left to
-        // right diagnol), the first letter of the remaining word, and the last letter of the
-        // third top word (right to left diagonal).
-        let left_v_word = [cand[0][0], cand[3][0], cand[2][2]];
-        if !possible_words.contains(&left_v_word) {
-            continue;
-        }
-        // The right vertical word is from the first letter of the third top word, the third letter
-        // of the remaining word and the third letter of the first top word.
-        let right_v_word = [cand[2][0], cand[3][2], cand[0][2]];
-        if !possible_words.contains(&right_v_word) {
-            continue;
-        }
-
-        out.push(cand);
+fn filter_by_rest<'a>(cand: &Vec<[char; 3]>, possible_words: &HashSet<[char; 3]>) -> bool {
+    // The left vertical word is made up of the first letter of the first top word (left to
+    // right diagnol), the first letter of the remaining word, and the last letter of the
+    // third top word (right to left diagonal).
+    let left_v_word = [cand[0][0], cand[3][0], cand[2][2]];
+    if !possible_words.contains(&left_v_word) {
+        return false;
     }
-    out
+    // The right vertical word is from the first letter of the third top word, the third letter
+    // of the remaining word and the third letter of the first top word.
+    let right_v_word = [cand[2][0], cand[3][2], cand[0][2]];
+    possible_words.contains(&right_v_word)
 }
 
 // Returns the 3x3 grid of letters in row major form.
@@ -296,8 +275,11 @@ fn main() {
         word_set
     };
     let top_cands = top_row_candidates(&four_cands, &word_set);
-    let bottom_cands = filter_by_bottom(top_cands, &word_set);
-    let last_cands = filter_by_rest(bottom_cands, &word_set);
+    let last_cands: Vec<&Vec<[char; 3]>> = top_cands
+        .iter()
+        .filter(|cand| filter_by_bottom(cand, &word_set))
+        .filter(|cand| filter_by_rest(cand, &word_set))
+        .collect();
 
     for last_cand in last_cands {
         println!("Last candidate words:");
