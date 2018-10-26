@@ -1,0 +1,8 @@
+[package]
+name = "oct_21_2018_pat_rondon"
+version = "0.1.0"
+authors = ["Daniel Smith <daniel.smith@datadoghq.com>"]
+
+[dependencies]
+permutohedron = "0.2.4"
+itertools = "0.7.8"
