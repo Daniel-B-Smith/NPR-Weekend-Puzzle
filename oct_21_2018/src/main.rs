@@ -201,9 +201,9 @@ fn top_row_candidates<'a>(
 // Filter out sets of four where the bottom generated from the top three words isn't a word.
 fn filter_by_bottom<'a>(cand: &Vec<[char; 3]>, possible_words: &HashSet<[char; 3]>) -> bool {
     assert!(cand.len() == 4);
-    let first = cand[0][2];
+    let first = cand[2][2];
     let second = cand[1][2];
-    let third = cand[2][2];
+    let third = cand[0][2];
     let word = [first, second, third];
     possible_words.contains(&word)
 }
