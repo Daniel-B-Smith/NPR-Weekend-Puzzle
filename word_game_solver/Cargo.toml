@@ -1,8 +1,23 @@
 [package]
 name = "solver"
 version = "0.1.0"
-authors = ["megschmitt"]
+authors = ["Daniel Smith"]
 edition = "2018"
+
+[lib]
+name = "solver_lib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "solver"
+path = "src/main.rs"
 
 [dependencies]
 rand = "0.6.1"
+
+[dev-dependencies]
+criterion = "0.2"
+
+[[bench]]
+name = "solver_bench"
+harness = false
