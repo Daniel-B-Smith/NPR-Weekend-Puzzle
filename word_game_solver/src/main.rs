@@ -1,4 +1,3 @@
-
 use std::error::Error;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
@@ -9,14 +8,14 @@ use std::collections::{HashMap, HashSet};
 use rand::{thread_rng, Rng};
 
 fn is_unique(s: &str) -> bool {
-    let set : HashSet<char> = s.chars().collect();
+    let set: HashSet<char> = s.chars().collect();
     set.len() == s.len()
 }
 
 fn letter_combos(words: &[String]) -> HashMap<Vec<char>, Vec<&String>> {
     let mut combos = HashMap::new();
     for word in words {
-        let mut chars : Vec<char> = word.chars().collect();
+        let mut chars: Vec<char> = word.chars().collect();
         chars.sort();
         combos.entry(chars).or_insert(Vec::new()).push(word);
     }
@@ -25,7 +24,7 @@ fn letter_combos(words: &[String]) -> HashMap<Vec<char>, Vec<&String>> {
 
 fn gen_guess<'a>(combos: &HashMap<Vec<char>, Vec<&'a String>>) -> &'a String {
     let mut rng = thread_rng();
-    
+
     let size = combos.len();
     let select = rng.gen_range(0, size);
     let words = combos.iter().nth(select).unwrap().1;
@@ -43,7 +42,7 @@ fn num_matches(first: &Vec<char>, second: &Vec<char>) -> i32 {
 }
 
 fn filter_matches(word: &str, matching: i32, combos: &mut HashMap<Vec<char>, Vec<&String>>) {
-    let mut chars : Vec<char> = word.chars().collect();
+    let mut chars: Vec<char> = word.chars().collect();
     chars.sort();
 
     combos.retain(|k, _| num_matches(k, &chars) == matching);
@@ -71,7 +70,7 @@ fn main() {
         let guess = gen_guess(&combos);
         println!("My next guess is: {}", guess);
         io::stdin().read_line(&mut input).unwrap();
-        let num_matching : i32 = input.trim().parse().unwrap();
+        let num_matching: i32 = input.trim().parse().unwrap();
         if num_matching < 0 || num_matching > 5 {
             println!("No cheating!");
             continue;
