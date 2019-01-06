@@ -1,6 +1,7 @@
 use std::vec::Vec;
 
-use std::collections::{HashMap, HashSet};
+extern crate hashbrown;
+use hashbrown::{HashMap, HashSet};
 
 use rand::{thread_rng, Rng};
 
