@@ -14,10 +14,10 @@ path = "src/main.rs"
 
 [dependencies]
 rand = "0.6.1"
-hashbrown = "0.1"
+hashbrown = "0.1.7"
 
 [dev-dependencies]
-criterion = "0.2"
+criterion = "0.2.7"
 
 [[bench]]
 name = "solver_bench"
